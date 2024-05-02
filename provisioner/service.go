@@ -73,8 +73,7 @@ func (s *Service) HandleScheduledTermination(ctx context.Context, msg *messages.
 //encore:api private method=GET path=/raceRoom/server/scheduleTermination
 func (s *Service) ScheduleTermination(ctx context.Context) error {
 	return s.WithTransaction(ctx, func(ctx context.Context) error {
-		// TODO - Config
-		batch, err := s.store.FindExpired(ctx, 100)
+		batch, err := s.store.FindExpired(ctx, 50) // const
 		if err != nil {
 			return err
 		}

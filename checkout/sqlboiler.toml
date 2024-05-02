@@ -5,7 +5,7 @@ no-tests = true
 add-enum-types = true
 
 [psql]
-  dbname = "raceroom"
+  dbname = "checkout"
   host   = "localhost"
   port   = 9500
   user   = "raceroom-mtdi"

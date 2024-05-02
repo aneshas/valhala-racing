@@ -6,6 +6,7 @@ require (
 	encore.dev v1.34.3
 	github.com/aneshas/tx/v2 v2.2.0
 	github.com/friendsofgo/errors v0.9.2
+	github.com/getbrevo/brevo-go v1.0.3
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/stripe/stripe-go/v76 v76.25.0
 	github.com/volatiletech/null/v8 v8.1.2
@@ -15,7 +16,9 @@ require (
 )
 
 require (
+	github.com/antihax/optional v1.0.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
@@ -30,8 +33,11 @@ require (
 	github.com/volatiletech/randomize v0.0.1 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 )

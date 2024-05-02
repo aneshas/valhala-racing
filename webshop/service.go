@@ -2,13 +2,10 @@ package webshop
 
 import (
 	"embed"
-	"encoding/json"
-	"encore.app/raceroom"
+	"encore.app/checkout"
 	"encore.dev/rlog"
-	"errors"
 	"fmt"
 	"github.com/labstack/echo/v4"
-	"github.com/stripe/stripe-go/v76"
 	"io/fs"
 	"net/http"
 	"strconv"
@@ -78,57 +75,18 @@ func (s *Service) requestServer(c echo.Context) error {
 		return err
 	}
 
-	resp, err := raceroom.RequestServer(
+	resp, err := checkout.RequestServer(
 		c.Request().Context(),
-		&raceroom.RequestServerReq{
+		&checkout.RequestServerReq{
 			HoursReserved: req.Hours,
 			Email:         req.Email,
 		})
 	if err != nil {
 		rlog.Error(err.Error())
 
-		// TODO - Error page
+		// TODO - Error page redirect
 		return fmt.Errorf("could not create server request")
 	}
 
 	return c.Redirect(http.StatusSeeOther, resp.PaymentRedirect)
-}
-
-func (s *Service) stripeCallback(c echo.Context) error {
-	var event stripe.Event
-
-	err := c.Bind(&event)
-	if err != nil {
-		rlog.Error(err.Error())
-
-		return c.NoContent(http.StatusBadRequest)
-	}
-
-	switch event.Type {
-	case "checkout.session.completed":
-		var s stripe.CheckoutSession
-
-		err := json.Unmarshal(event.Data.Raw, &s)
-		if err != nil {
-			rlog.Error(err.Error())
-
-			return c.NoContent(http.StatusBadRequest)
-		}
-
-		err = raceroom.RegisterServerPayment(
-			c.Request().Context(),
-			&raceroom.RegisterServerPaymentReq{
-				PaymentRef: s.ID,
-			})
-		if err != nil {
-			err = errors.Join(err, fmt.Errorf("could not register payment"))
-
-			return c.NoContent(http.StatusServiceUnavailable)
-		}
-
-	default:
-		rlog.Info("unhandled stripe event", "event", event.Type)
-	}
-
-	return nil
 }

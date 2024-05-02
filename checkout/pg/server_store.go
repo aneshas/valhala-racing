@@ -3,9 +3,9 @@ package pg
 import (
 	"context"
 	"database/sql"
+	"encore.app/checkout/pg/boiler"
+	"encore.app/checkout/server"
 	stdpg "encore.app/pkg/pg"
-	"encore.app/raceroom/pg/boiler"
-	"encore.app/raceroom/server"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"time"
@@ -62,7 +62,10 @@ func (s *ServerStore) Update(ctx context.Context, server server.Server) error {
 func (s *ServerStore) FindByPaymentRef(ctx context.Context, paymentRef string) (*server.Server, error) {
 	conn := stdpg.Conn(ctx, s.db)
 
-	entry, err := boiler.Servers(boiler.ServerWhere.PaymentRef.EQ(paymentRef)).One(ctx, conn)
+	entry, err := boiler.Servers(
+		boiler.ServerWhere.PaymentRef.EQ(paymentRef),
+		boiler.ServerWhere.PaymentReceivedAt.IsNull(),
+	).One(ctx, conn)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,8 @@
 package webshop
 
-import "github.com/labstack/echo/v4"
+import (
+	"github.com/labstack/echo/v4"
+)
 
 func initService() (*Service, error) {
 	s := Service{}
@@ -10,7 +12,6 @@ func initService() (*Service, error) {
 	g := e.Group("backend")
 
 	g.POST("/request-server", s.requestServer)
-	g.GET("/stripe-callback", s.stripeCallback)
 
 	s.e = e
 

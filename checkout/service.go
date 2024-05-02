@@ -1,15 +1,19 @@
-package raceroom
+package checkout
 
 import (
 	"context"
+	"encore.app/checkout/server"
+	"encore.app/pkg/errs"
 	"encore.app/pkg/messages"
-	"encore.app/raceroom/server"
+	"errors"
 	"github.com/aneshas/tx/v2"
+	"net/http"
 )
 
 // PaymentProvider represents external payment gateway
 type PaymentProvider interface {
 	StartSession(hoursRequested int, customerEmail string) (string, string, error)
+	HandleCheckoutCompleted(w http.ResponseWriter, req *http.Request, h func(ref string) error) error
 }
 
 // Store represents a store for servers
@@ -44,7 +48,7 @@ type RequestServerResp struct {
 
 // RequestServer requests a new server
 //
-// encore:api private method=POST path=/raceRoom/server/request
+// encore:api private method=POST path=/checkout/server/request
 func (s *Service) RequestServer(ctx context.Context, req *RequestServerReq) (resp *RequestServerResp, err error) {
 	return resp, s.WithTransaction(ctx, func(ctx context.Context) error {
 		ref, checkoutURL, err := s.payments.StartSession(req.HoursReserved, req.Email)
@@ -68,17 +72,39 @@ func (s *Service) RequestServer(ctx context.Context, req *RequestServerReq) (res
 	})
 }
 
+//encore:api public raw path=/checkout/payment-callback
+func (s *Service) PaymentCallback(w http.ResponseWriter, req *http.Request) {
+	err := s.payments.HandleCheckoutCompleted(w, req, func(ref string) error {
+		return s.RegisterServerPayment(req.Context(), &RegisterServerPaymentReq{
+			PaymentRef: ref,
+		})
+	})
+	if err != nil {
+		if errors.Is(err, errs.ErrTransientPaymentFailure) {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// RegisterServerPaymentReq represents register server payment request
 type RegisterServerPaymentReq struct {
 	PaymentRef string
 }
 
+// PaymentReceived represents register server payment request
 type PaymentReceived struct {
 	ServerID uint64 `json:"server_id"`
 }
 
 // RegisterServerPayment marks server as paid
 //
-//encore:api private method=POST path=/raceRoom/server/registerPayment
+//encore:api private method=POST path=/checkout/server/registerPayment
 func (s *Service) RegisterServerPayment(ctx context.Context, req *RegisterServerPaymentReq) error {
 	return s.WithTransaction(ctx, func(ctx context.Context) error {
 		svr, err := s.store.FindByPaymentRef(ctx, req.PaymentRef)
@@ -100,7 +126,7 @@ func (s *Service) RegisterServerPayment(ctx context.Context, req *RegisterServer
 	})
 }
 
-//encore:api private method=GET path=/raceRoom/server/details/:id
+//encore:api private method=GET path=/checkout/server/details/:id
 func (s *Service) ServerDetails(ctx context.Context, id uint64) (*server.Server, error) {
 	return &server.Server{
 		UserEmail: "mail@mail.com",
