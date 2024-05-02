@@ -70,13 +70,6 @@ func (g *Gateway) HandleCheckoutCompleted(w http.ResponseWriter, req *http.Reque
 		return errors.Join(err, errs.ErrTransientPaymentFailure)
 	}
 
-	// If you are testing your webhook locally with the Stripe CLI you
-	// can find the endpoint's secret by running `stripe listen`
-	// Otherwise, find your endpoint's secret in your webhook settings
-	// in the Developer Dashboard
-
-	// Pass the request body and Stripe-Signature header to ConstructEvent, along
-	// with the webhook signing key.
 	event, err := webhook.ConstructEvent(payload, req.Header.Get("Stripe-Signature"), g.EndpointSecret)
 	if err != nil {
 		return err
@@ -94,6 +87,6 @@ func (g *Gateway) HandleCheckoutCompleted(w http.ResponseWriter, req *http.Reque
 		return h(s.ID)
 
 	default:
-		return nil
+		return fmt.Errorf("unsupported event: %s", event.Type)
 	}
 }

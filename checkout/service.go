@@ -5,6 +5,7 @@ import (
 	"encore.app/checkout/server"
 	"encore.app/pkg/errs"
 	"encore.app/pkg/messages"
+	"encore.dev/rlog"
 	"errors"
 	"github.com/aneshas/tx/v2"
 	"net/http"
@@ -80,6 +81,8 @@ func (s *Service) PaymentCallback(w http.ResponseWriter, req *http.Request) {
 		})
 	})
 	if err != nil {
+		rlog.Error(err.Error())
+
 		if errors.Is(err, errs.ErrTransientPaymentFailure) {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return

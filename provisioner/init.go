@@ -81,7 +81,7 @@ var _ = pubsub.NewSubscription(
 
 var _ = cron.NewJob("provisioner-termination-scheduler", cron.JobConfig{
 	Title:    "Schedule expired server termination",
-	Every:    cron.Minute,
+	Every:    cron.Minute * 5,
 	Endpoint: scheduleServerTermination,
 })
 
