@@ -1,0 +1,15 @@
+output   = "pg/boiler"
+pkgname  = "boiler"
+wipe     = true
+no-tests = true
+add-enum-types = true
+
+[psql]
+  dbname = "provisioner"
+  host   = "localhost"
+  port   = 9500
+  user   = "raceroom-mtdi"
+  pass   = "local-cooilv110ith8pe1n82g"
+  schema = "public"
+  blacklist = ["schema_migrations", "outbox"]
+  sslmode = "disable"
