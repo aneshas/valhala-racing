@@ -7,9 +7,10 @@ import (
 	"encore.app/pkg/infra"
 	"encore.app/pkg/messages"
 	stdpg "encore.app/pkg/pg"
-	"encore.dev/config"
+	encore "encore.dev"
 	"encore.dev/pubsub"
 	"encore.dev/storage/sqldb"
+	"fmt"
 	"github.com/aneshas/tx/v2"
 	"github.com/aneshas/tx/v2/sqltx"
 	"x.encore.dev/infra/pubsub/outbox"
@@ -19,12 +20,6 @@ var secrets struct {
 	StripeApiKey         string
 	StripeEndpointSecret string
 }
-
-type checkoutConfig struct {
-	Host config.String
-}
-
-var cfg = config.Load[*checkoutConfig]()
 
 var db = sqldb.NewDatabase(
 	"checkout",
@@ -48,9 +43,12 @@ func initService() (*Service, error) {
 
 	go relay.PollForMessages(context.Background(), -1)
 
+	url := encore.Meta().APIBaseURL
+	host := fmt.Sprintf("%s://%s", url.Scheme, url.Host)
+
 	return &Service{
 		Transactor: tx.New(sqltx.NewDB(stdDB)),
-		payments:   stripe.NewGateway(secrets.StripeApiKey, secrets.StripeEndpointSecret, cfg.Host()),
+		payments:   stripe.NewGateway(secrets.StripeApiKey, secrets.StripeEndpointSecret, host),
 		store:      pg.NewServerStore(stdDB),
 		pub:        stdpg.NewOutboxStore(stdDB, refs),
 	}, nil
