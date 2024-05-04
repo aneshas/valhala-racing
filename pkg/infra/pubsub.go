@@ -9,7 +9,7 @@ import (
 var ReceivedServerPaymentsTopic = pubsub.NewTopic[*messages.ServerPaymentReceived](
 	"received-payments-topic",
 	pubsub.TopicConfig{
-		DeliveryGuarantee: pubsub.ExactlyOnce,
+		DeliveryGuarantee: pubsub.AtLeastOnce,
 	},
 )
 
