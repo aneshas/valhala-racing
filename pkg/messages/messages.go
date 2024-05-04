@@ -8,8 +8,9 @@ type ServerPaymentReceived struct {
 
 // ServerProvisioned represents a provisioned server event
 type ServerProvisioned struct {
-	ServerID   uint64 `json:"server_id"`
-	InstanceID string `json:"instance_id"`
+	ServerID            uint64 `json:"server_id"`
+	ProvisionedServerID uint64 `json:"provisioned_server_id"`
+	InstanceID          string `json:"instance_id"`
 }
 
 // ServerTerminationScheduled represents a scheduled server termination event

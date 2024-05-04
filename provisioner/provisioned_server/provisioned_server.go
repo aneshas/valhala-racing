@@ -41,3 +41,9 @@ func (s *ProvisionedServer) Terminate() {
 
 	s.TerminatedAt = &now
 }
+
+// InstanceDetails holds provisioned server instance info
+type InstanceDetails struct {
+	AdminURL string `json:"adminUrl,omitempty"`
+	IPAddr   string `json:"IPAddr,omitempty"`
+}

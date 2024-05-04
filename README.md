@@ -11,6 +11,7 @@ easily be extended to handle all kinds of games / servers.
 ## Encore Implementation
 The whole solution is built using [Encore](https://encore.dev/) and showcases the following:
 - How to server server-side static content 
+- Encore services communicating via async and sync interfaces
 - Usage of Encore Transactional Outbox for reliable message publishing 
 - How [sqlboiler](https://github.com/volatiletech/sqlboiler) can be used with Encore. 
 - How one can combine Encore, sqlboiler and outbox pattern in atomic vay using [tx](https://github.com/aneshas/tx) go package

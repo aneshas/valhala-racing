@@ -1,6 +1,8 @@
 package awsprovisioner
 
 import (
+	"encore.app/provisioner/provisioned_server"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -8,6 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
+
+var serverSpecs = []string{
+	"ami-094012549ccc3d684",
+	"t2.medium",
+	"sg-0b687aa00baccc7ff",
+	"raceroom-servers",
+}
 
 // NewAWSProvisioner instantiates new aws provisioner
 func NewAWSProvisioner(keyID, keySecret, roleARN string) *AWSProvisioner {
@@ -29,17 +38,16 @@ type AWSProvisioner struct {
 }
 
 // ProvisionServer provisions new server instance
-func (p *AWSProvisioner) ProvisionServer(serverID uint64) (string, error) {
+func (p *AWSProvisioner) ProvisionServer(_ uint64) (string, error) {
 	result, err := p.ec2.RunInstances(&ec2.RunInstancesInput{
-		DryRun:       aws.Bool(true),
-		ImageId:      aws.String("ami-094012549ccc3d684"),
-		InstanceType: aws.String("t2.medium"),
+		ImageId:      aws.String(serverSpecs[0]),
+		InstanceType: aws.String(serverSpecs[1]),
 		MinCount:     aws.Int64(1),
 		MaxCount:     aws.Int64(1),
 		SecurityGroupIds: []*string{
-			aws.String("sg-0b687aa00baccc7ff"),
+			aws.String(serverSpecs[2]),
 		},
-		KeyName: aws.String("raceroom-servers"),
+		KeyName: aws.String(serverSpecs[3]),
 	})
 	if err != nil {
 		return "", err
@@ -52,5 +60,30 @@ func (p *AWSProvisioner) ProvisionServer(serverID uint64) (string, error) {
 
 // TerminateServer terminates server instance
 func (p *AWSProvisioner) TerminateServer(instanceID string) error {
-	return nil
+	_, err := p.ec2.TerminateInstances(&ec2.TerminateInstancesInput{
+		InstanceIds: []*string{aws.String(instanceID)},
+	})
+
+	return err
+}
+
+// InstanceDetails returns provisioned instance details
+func (p *AWSProvisioner) InstanceDetails(instanceID string) (*provisionedserver.InstanceDetails, error) {
+	result, err := p.ec2.DescribeInstances(&ec2.DescribeInstancesInput{
+		InstanceIds: []*string{aws.String(instanceID)},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var details provisionedserver.InstanceDetails
+
+	for _, reservation := range result.Reservations {
+		for _, instance := range reservation.Instances {
+			details.AdminURL = fmt.Sprintf("http://%s:8088", *instance.PublicIpAddress)
+			details.IPAddr = *instance.PublicIpAddress
+		}
+	}
+
+	return &details, nil
 }

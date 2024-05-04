@@ -7,6 +7,7 @@ import (
 	stdpg "encore.app/pkg/pg"
 	"encore.app/provisioner/awsprovisioner"
 	"encore.app/provisioner/pg"
+	"encore.dev/config"
 	"encore.dev/cron"
 	"encore.dev/pubsub"
 	"encore.dev/storage/sqldb"
@@ -27,6 +28,12 @@ var db = sqldb.NewDatabase(
 		Migrations: "./pg/migrations",
 	},
 )
+
+type provisionerConfig struct {
+	IsTest config.Bool
+}
+
+var cfg = config.Load[*provisionerConfig]()
 
 func initService() (*Service, error) {
 	var (
@@ -55,9 +62,15 @@ func initService() (*Service, error) {
 
 	go relay.PollForMessages(context.Background(), -1)
 
+	var provisioner ServerProvisioner = awsprovisioner.TestProvisioner
+
+	if !cfg.IsTest() {
+		provisioner = awsprovisioner.NewAWSProvisioner(secrets.AWSKeyID, secrets.AWSKeySecret, secrets.AWSRoleARN)
+	}
+
 	return &Service{
 		Transactor:  tx.New(sqltx.NewDB(stdDB)),
-		provisioner: awsprovisioner.NewAWSProvisioner(secrets.AWSKeyID, secrets.AWSKeySecret, secrets.AWSRoleARN),
+		provisioner: provisioner,
 		store:       pg.NewProvisionedServerStore(stdDB),
 		pub:         stdpg.NewOutboxStore(stdDB, refs),
 	}, nil
@@ -68,9 +81,9 @@ var _ = pubsub.NewSubscription(
 	"server-provisioner",
 	pubsub.SubscriptionConfig[*messages.ServerPaymentReceived]{
 		Handler:        pubsub.MethodHandler((*Service).HandlePaymentReceived),
-		MaxConcurrency: 20,
+		MaxConcurrency: 10,
 		RetryPolicy: &pubsub.RetryPolicy{
-			MaxRetries: 20,
+			MaxRetries: 10,
 		},
 	},
 )
@@ -80,9 +93,9 @@ var _ = pubsub.NewSubscription(
 	"server-terminator",
 	pubsub.SubscriptionConfig[*messages.ServerTerminationScheduled]{
 		Handler:        pubsub.MethodHandler((*Service).HandleScheduledTermination),
-		MaxConcurrency: 20,
+		MaxConcurrency: 10,
 		RetryPolicy: &pubsub.RetryPolicy{
-			MaxRetries: 20,
+			MaxRetries: 10,
 		},
 	},
 )

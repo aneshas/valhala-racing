@@ -24,7 +24,7 @@ func (s *Service) HandleServerProvisioned(ctx context.Context, msg *messages.Ser
 		return err
 	}
 
-	instanceDetails, err := provisioner.InstanceDetails(ctx, msg.InstanceID)
+	instanceDetails, err := provisioner.InstanceDetails(ctx, msg.ProvisionedServerID)
 	if err != nil {
 		return err
 	}

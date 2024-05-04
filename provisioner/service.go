@@ -21,6 +21,7 @@ type Store interface {
 type ServerProvisioner interface {
 	ProvisionServer(serverID uint64) (string, error)
 	TerminateServer(instanceID string) error
+	InstanceDetails(instanceID string) (*provisionedserver.InstanceDetails, error)
 }
 
 // Service represents provisioner api service
@@ -41,12 +42,22 @@ type InstanceDetailsResp struct {
 	ExpiresOn string `json:"expiryTime"`
 }
 
-//encore:api private method=GET path=/provisioner/instance/:id/details
-func (s *Service) InstanceDetails(ctx context.Context, id string) (*InstanceDetailsResp, error) {
+//encore:api private method=GET path=/provisioner/instance/:provisionedServerId/details
+func (s *Service) InstanceDetails(ctx context.Context, provisionedServerId uint64) (*InstanceDetailsResp, error) {
+	server, err := s.store.FindByID(ctx, provisionedServerId)
+	if err != nil {
+		return nil, err
+	}
+
+	details, err := s.provisioner.InstanceDetails(server.InstanceID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &InstanceDetailsResp{
-		AdminURL:  "https:/foo-bar.com",
-		IPAddr:    "10.18.2.3",
-		ExpiresOn: time.Now().Format(time.RFC1123), // From DB
+		AdminURL:  details.AdminURL,
+		IPAddr:    details.IPAddr,
+		ExpiresOn: server.ExpiresAt.Format(time.RFC1123),
 	}, nil
 }
 
@@ -58,12 +69,11 @@ func (s *Service) HandlePaymentReceived(ctx context.Context, msg *messages.Serve
 		instanceID, err := s.provisioner.ProvisionServer(msg.ServerID)
 		if err != nil {
 			rlog.Error("provisioner error", "err", err.Error())
-			instanceID = "xxx"
 
-			// return nil
+			return err
 		}
 
-		_, err = s.store.Save(
+		id, err := s.store.Save(
 			ctx,
 			*provisionedserver.New(
 				msg.ServerID,
@@ -76,8 +86,9 @@ func (s *Service) HandlePaymentReceived(ctx context.Context, msg *messages.Serve
 		}
 
 		return s.pub.Publish(ctx, messages.ServerProvisioned{
-			ServerID:   msg.ServerID,
-			InstanceID: instanceID,
+			ServerID:            msg.ServerID,
+			ProvisionedServerID: id,
+			InstanceID:          instanceID,
 		})
 	})
 }
@@ -105,7 +116,7 @@ func (s *Service) HandleScheduledTermination(ctx context.Context, msg *messages.
 		}
 
 		return s.pub.Publish(ctx, messages.ServerTerminated{
-			ServerID: msg.ServerID,
+			ServerID: server.ServerID,
 		})
 	})
 }
