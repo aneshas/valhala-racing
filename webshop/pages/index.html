@@ -21,19 +21,14 @@
             font-family: 'Jockey One', sans-serif;
         }
 
-        .khand, p {
-            font-family: 'Khand', sans-serif;
-            font-weight: 300;
-        }
-
         .khand-400 {
             font-family: 'Khand', sans-serif;
             font-weight: 400;
         }
 
-        .khand-500 {
+        p {
             font-family: 'Khand', sans-serif;
-            font-weight: 500;
+            font-weight: 300;
         }
 
         button:focus {
@@ -41,29 +36,8 @@
             box-shadow: none !important;
         }
 
-        .projection-item:not(:last-child) {
-            border-bottom: 1px solid darkgray;
-        }
-
         .projection-actions > * {
             margin-left: 1rem;
-        }
-
-        .main-nav {
-            max-width: 220px;
-        }
-
-        .btn-icon-only {
-            font-size: 24px;
-        }
-
-        .projection-progress {
-            text-align: right;
-            width: 100px;
-        }
-
-        .nav-item:has(> a.active) {
-            background-color: black !important;
         }
 
         .main {
@@ -88,7 +62,7 @@
         <div class="col main">
             <img src="https://cdn.akamai.steamstatic.com/steam/apps/211500/header.jpg?t=1700130566"
                  alt="Copyright KW Studios"
-            class="rlogo"/>
+                 class="rlogo"/>
             <h1 class="mt-5">RaceRoom On-Demand Dedicated Servers</h1>
             <h4><i class="ti ti-steering-wheel"></i> by Valhalla Racing!</h4>
 
@@ -110,7 +84,7 @@
                 </form>
             </div>
 
-            <h3 class="mt-5"><i class="ti ti-question-mark"></i> How it works?</h3>
+            <h3 class="mt-5 mb-4"><i class="ti ti-question-mark"></i> How it works:</h3>
             <ol>
                 <li>
                     <h5>Choose your package</h5>
@@ -132,17 +106,19 @@
                 </li>
             </ol>
 
-            <h3 class="mt-5"><i class="ti ti-server-2"></i> Server Specs</h3>
-            <p>Bla bla</p>
-
-
             <h3 class="mt-5"><i class="ti ti-info-circle"></i> Please Note!</h3>
+
             <p>The service is in early access and please bear with us while we iron the details out.</p>
-            <p>FEEDBACK LINK HERE</p>
+
+            <p class="text-danger">
+                Service is currently in test mode (use <a href="https://docs.stripe.com/testing" target="_blank">Stripe Test Cards</a>)
+            </p>
+
+            <p>
+                <a href="mailto:me@anes.io">Send your feedback!</a>
+            </p>
+
             <p>Thank You!</p>
-
-
-            <h3 class="mt-5"><i class="ti ti-info-circle"></i> Coming Soon!</h3>
         </div>
     </div>
 </div>

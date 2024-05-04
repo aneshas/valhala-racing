@@ -86,8 +86,7 @@ func (s *Service) requestServer(c echo.Context) error {
 	if err != nil {
 		rlog.Error(err.Error())
 
-		// TODO - Error page redirect
-		return fmt.Errorf("could not create server request")
+		return c.String(http.StatusInternalServerError, "something went wrong")
 	}
 
 	return c.Redirect(http.StatusSeeOther, resp.PaymentRedirect)

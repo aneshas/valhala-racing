@@ -8,6 +8,7 @@ import (
 	provisionedserver "encore.app/provisioner/provisioned_server"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"time"
 )
 
@@ -73,20 +74,6 @@ func (s *ProvisionedServerStore) FindByID(ctx context.Context, id uint64) (*prov
 	return &svr, nil
 }
 
-// select
-// id,
-// instance_id
-// from server
-// where
-// server_provisioned_on is not null
-// and scheduled_termination_on is null
-// and server_terminated_on is null
-// and AGE((now() at time zone 'utc'), server_provisioned_on) >
-// (INTERVAL '1 hour' * hours_reserved + '5 minutes')
-// for update nowait
-// limit $1`,
-// 		maxConcurrency,
-
 // FindExpired returns a batch of expired provisioned servers
 func (s *ProvisionedServerStore) FindExpired(ctx context.Context, limit int) ([]provisionedserver.ProvisionedServer, error) {
 	conn := stdpg.Conn(ctx, s.db)
@@ -94,8 +81,9 @@ func (s *ProvisionedServerStore) FindExpired(ctx context.Context, limit int) ([]
 	result, err := boiler.ProvisionedServers(
 		boiler.ProvisionedServerWhere.TerminationScheduledAt.IsNull(),
 		boiler.ProvisionedServerWhere.TerminatedAt.IsNull(),
-		// TODO - Other queries - eg. expired
-
+		boiler.ProvisionedServerWhere.ExpiresAt.LTE(time.Now().UTC()),
+		qm.Limit(limit),
+		qm.For("update nowait"),
 	).All(ctx, conn)
 	if err != nil {
 		return nil, err

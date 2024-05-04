@@ -15,11 +15,12 @@ import (
 
 var prices = map[int]string{
 	1:  "price_1ORCGxKZ3doyTEC4s3CyKSra",
-	3:  "price_1ORCIWKZ3doyTEC4EcqVG9BS",
+	3:  "price_1PCiwuKZ3doyTEC4eO7fMhsZ",
 	5:  "price_1ORh37KZ3doyTEC4ZWmHSXUk",
 	10: "price_1ORh4QKZ3doyTEC4MqLgYdPd",
 }
 
+// NewGateway instantiates new stripe gateway
 func NewGateway(apiKey string, endpointSecret string, host string) *Gateway {
 	stripe.Key = apiKey
 
@@ -30,12 +31,14 @@ func NewGateway(apiKey string, endpointSecret string, host string) *Gateway {
 	}
 }
 
+// Gateway represents stripe gateway
 type Gateway struct {
 	APIKey         string
 	EndpointSecret string
 	Host           string
 }
 
+// StartSession starts a new payment session
 func (g *Gateway) StartSession(hoursRequested int, customerEmail string) (string, string, error) {
 	params := &stripe.CheckoutSessionParams{
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
@@ -60,6 +63,7 @@ func (g *Gateway) StartSession(hoursRequested int, customerEmail string) (string
 	return sess.ID, sess.URL, nil
 }
 
+// HandleCheckoutCompleted handles and verifies checkout process completion
 func (g *Gateway) HandleCheckoutCompleted(w http.ResponseWriter, req *http.Request, h func(ref string) error) error {
 	const maxBodyBytes = int64(65536)
 
