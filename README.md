@@ -1,5 +1,5 @@
 # Valhala RaceRoom Dedicated Servers
-
+![Flow Sample](res/flow-sample.png)
 [RaceRoom](https://game.raceroom.com/) is a well known racing simulator used in variety of competitions.
 
 This repo has been created as a proof of concept for purchasing on-demand time-based multiplayer dedicated servers
