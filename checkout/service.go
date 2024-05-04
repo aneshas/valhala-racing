@@ -77,7 +77,7 @@ func (s *Service) RequestServer(ctx context.Context, req *RequestServerReq) (res
 //encore:api public raw path=/checkout/payment-callback
 func (s *Service) PaymentCallback(w http.ResponseWriter, req *http.Request) {
 	err := s.payments.HandleCheckoutCompleted(w, req, func(ref string) error {
-		return s.RegisterServerPayment(req.Context(), &RegisterServerPaymentReq{
+		return RegisterServerPayment(req.Context(), &RegisterServerPaymentReq{
 			PaymentRef: ref,
 		})
 	})

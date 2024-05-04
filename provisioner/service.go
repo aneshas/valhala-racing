@@ -63,7 +63,7 @@ func (s *Service) HandlePaymentReceived(ctx context.Context, msg *messages.Serve
 			// return nil
 		}
 
-		provisionedServerID, err := s.store.Save(
+		_, err = s.store.Save(
 			ctx,
 			*provisionedserver.New(
 				msg.ServerID,
@@ -76,7 +76,7 @@ func (s *Service) HandlePaymentReceived(ctx context.Context, msg *messages.Serve
 		}
 
 		return s.pub.Publish(ctx, messages.ServerProvisioned{
-			ServerID:   provisionedServerID,
+			ServerID:   msg.ServerID,
 			InstanceID: instanceID,
 		})
 	})
