@@ -76,10 +76,12 @@ func (s *Service) RequestServer(ctx context.Context, req *RequestServerReq) (res
 
 //encore:api public raw path=/checkout/payment-callback
 func (s *Service) PaymentCallback(w http.ResponseWriter, req *http.Request) {
+	var paymentRef string
+
 	err := s.payments.HandleCheckoutCompleted(w, req, func(ref string) error {
-		return RegisterServerPayment(req.Context(), &RegisterServerPaymentReq{
-			PaymentRef: ref,
-		})
+		paymentRef = ref
+
+		return nil
 	})
 	if err != nil {
 		rlog.Error(err.Error())
@@ -89,6 +91,14 @@ func (s *Service) PaymentCallback(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = RegisterServerPayment(req.Context(), &RegisterServerPaymentReq{
+		PaymentRef: paymentRef,
+	})
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

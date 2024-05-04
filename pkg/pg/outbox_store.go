@@ -23,7 +23,7 @@ func NewOutboxStore(db *sql.DB, topicRefs infra.TopicRefs) *OutboxStore {
 // Implements publisher
 type OutboxStore struct {
 	db   *sql.DB
-	refs map[any]any
+	refs infra.TopicRefs
 }
 
 // Publish publishes events to the respective topics using encore outbox pattern
@@ -38,7 +38,7 @@ func (os *OutboxStore) Publish(ctx context.Context, events ...any) error {
 	pf := outbox.StdlibTxPersister(tx.Tx)
 
 	for _, e := range events {
-		// TODO - Generic?
+		// Abstract away via generics
 
 		switch evt := e.(type) {
 		case messages.ServerPaymentReceived:
@@ -62,7 +62,7 @@ func (os *OutboxStore) Publish(ctx context.Context, events ...any) error {
 	return err
 }
 
-func topicRef[T any](m map[any]any) pubsub.Publisher[*T] {
+func topicRef[T any](m infra.TopicRefs) pubsub.Publisher[*T] {
 	var t T
 
 	return m[t].(pubsub.Publisher[*T])
