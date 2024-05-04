@@ -77,23 +77,8 @@ func (s *Service) RequestServer(ctx context.Context, req *RequestServerReq) (res
 //encore:api public raw path=/checkout/payment-callback
 func (s *Service) PaymentCallback(w http.ResponseWriter, req *http.Request) {
 	err := s.payments.HandleCheckoutCompleted(w, req, func(ref string) error {
-		return s.WithTransaction(req.Context(), func(ctx context.Context) error {
-			svr, err := s.store.FindByPaymentRef(ctx, ref)
-			if err != nil {
-				return err
-			}
-
-			svr.RegisterPayment()
-
-			err = s.pub.Publish(ctx, messages.ServerPaymentReceived{
-				ServerID:      svr.ID,
-				HoursReserved: svr.HoursReserved,
-			})
-			if err != nil {
-				return err
-			}
-
-			return s.store.Update(ctx, *svr)
+		return RegisterServerPayment(req.Context(), &RegisterServerPaymentReq{
+			PaymentRef: ref,
 		})
 	})
 	if err != nil {
@@ -133,15 +118,15 @@ func (s *Service) RegisterServerPayment(ctx context.Context, req *RegisterServer
 
 		svr.RegisterPayment()
 
-		err = s.pub.Publish(ctx, messages.ServerPaymentReceived{
-			ServerID:      svr.ID,
-			HoursReserved: svr.HoursReserved,
-		})
+		err = s.store.Update(ctx, *svr)
 		if err != nil {
 			return err
 		}
 
-		return s.store.Update(ctx, *svr)
+		return s.pub.Publish(ctx, messages.ServerPaymentReceived{
+			ServerID:      svr.ID,
+			HoursReserved: svr.HoursReserved,
+		})
 	})
 }
 
