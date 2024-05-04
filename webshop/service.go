@@ -26,15 +26,17 @@ type Service struct {
 	e *echo.Echo
 }
 
-// Serve serves the frontend for development.
+// ServeShopStatic serves the frontend for web shop.
 //
 //encore:api public raw path=/shop/*path
-func (s *Service) Serve(w http.ResponseWriter, req *http.Request) {
+func (s *Service) ServeShopStatic(w http.ResponseWriter, req *http.Request) {
 	handler.ServeHTTP(w, req)
 }
 
+// ServeShopBackend serves web shop backend
+//
 //encore:api public raw path=/backend/*path
-func (s *Service) ServeHTML(w http.ResponseWriter, req *http.Request) {
+func (s *Service) ServeShopBackend(w http.ResponseWriter, req *http.Request) {
 	s.e.ServeHTTP(w, req)
 }
 

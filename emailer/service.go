@@ -31,6 +31,7 @@ var _ = pubsub.NewSubscription(
 			// mail
 			// var params interface{}
 
+			// TODO - Add this info to the event or api endpoint on provisioner?
 			params := map[string]interface{}{
 				"adminUrl":        "https://foo-bar.com",
 				"serverIp":        "127.0.0.1",
