@@ -7,7 +7,7 @@ import (
 
 // ReceivedServerPaymentsTopic is a topic for received server payments
 var ReceivedServerPaymentsTopic = pubsub.NewTopic[*messages.ServerPaymentReceived](
-	"received-server-payments-topic",
+	"received-payments-topic",
 	pubsub.TopicConfig{
 		DeliveryGuarantee: pubsub.ExactlyOnce,
 	},

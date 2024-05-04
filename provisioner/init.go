@@ -65,7 +65,7 @@ func initService() (*Service, error) {
 
 var _ = pubsub.NewSubscription(
 	infra.ReceivedServerPaymentsTopic,
-	"aws-server-provisioner",
+	"server-provisioner",
 	pubsub.SubscriptionConfig[*messages.ServerPaymentReceived]{
 		Handler:        pubsub.MethodHandler((*Service).HandlePaymentReceived),
 		MaxConcurrency: 20,
@@ -77,7 +77,7 @@ var _ = pubsub.NewSubscription(
 
 var _ = pubsub.NewSubscription(
 	infra.ScheduledServerTerminationsTopic,
-	"aws-server-terminator",
+	"server-terminator",
 	pubsub.SubscriptionConfig[*messages.ServerTerminationScheduled]{
 		Handler:        pubsub.MethodHandler((*Service).HandleScheduledTermination),
 		MaxConcurrency: 20,
