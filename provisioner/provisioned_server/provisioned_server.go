@@ -34,3 +34,10 @@ func (s *ProvisionedServer) ScheduleTermination() {
 
 	s.TerminationScheduledAt = &now
 }
+
+// Terminate marks provisioned server as terminated
+func (s *ProvisionedServer) Terminate() {
+	now := time.Now().UTC()
+
+	s.TerminatedAt = &now
+}

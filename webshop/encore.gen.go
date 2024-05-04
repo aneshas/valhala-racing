@@ -11,13 +11,14 @@ import (
 // to simplify calling them from other services, as they were implemented as methods.
 // They are automatically updated by Encore whenever your API endpoints change.
 
-// Serve serves the frontend for development.
-func Serve(ctx context.Context, path string, req *http.Request) (*http.Response, error) {
+// ServeShopStatic serves the frontend for web shop.
+func ServeShopStatic(ctx context.Context, path string, req *http.Request) (*http.Response, error) {
 	// The implementation is elided here, and generated at compile-time by Encore.
 	return nil, nil
 }
 
-func ServeHTML(ctx context.Context, path string, req *http.Request) (*http.Response, error) {
+// ServeShopBackend serves web shop backend
+func ServeShopBackend(ctx context.Context, path string, req *http.Request) (*http.Response, error) {
 	// The implementation is elided here, and generated at compile-time by Encore.
 	return nil, nil
 }

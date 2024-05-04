@@ -3,88 +3,75 @@ package emailer
 import (
 	"context"
 	"encore.app/checkout"
-	"encore.app/pkg/infra"
 	"encore.app/pkg/messages"
-	"encore.dev/pubsub"
-	"encore.dev/rlog"
+	"encore.app/provisioner"
 	brevo "github.com/getbrevo/brevo-go/lib"
 )
 
-var secrets struct {
-	// AWSKeyID     string
-	// AWSKeySecret string
-	// AWSRoleARN   string
-	BrevoAPIKey string
+// Service represents e-mailer api service
+//
+// encore:service
+type Service struct {
+	client *brevo.APIClient
 }
 
-var _ = pubsub.NewSubscription(
-	infra.ProvisionedServersTopic,
-	"provisioned-server-email-notifier",
-	pubsub.SubscriptionConfig[*messages.ServerProvisioned]{
-		Handler: func(ctx context.Context, msg *messages.ServerProvisioned) error {
-			cfg := brevo.NewConfiguration()
+// HandleServerProvisioned sends an email after a server has been provisioned
+//
+//encore:api private method=POST path=/emailer/handleServerProvisioned
+func (s *Service) HandleServerProvisioned(ctx context.Context, msg *messages.ServerProvisioned) error {
+	serverDetails, err := checkout.ServerDetails(ctx, msg.ServerID)
+	if err != nil {
+		return err
+	}
 
-			cfg.AddDefaultHeader("api-key", secrets.BrevoAPIKey)
+	instanceDetails, err := provisioner.InstanceDetails(ctx, msg.InstanceID)
+	if err != nil {
+		return err
+	}
 
-			br := brevo.NewAPIClient(cfg)
+	params := map[string]interface{}{
+		"adminUrl":        instanceDetails.AdminURL,
+		"serverIp":        instanceDetails.IPAddr,
+		"hoursReserved":   serverDetails.HoursReserved,
+		"terminationDate": instanceDetails.ExpiresOn,
+	}
 
-			// mail
-			// var params interface{}
-
-			// TODO - Add this info to the event or api endpoint on provisioner?
-			params := map[string]interface{}{
-				"adminUrl":        "https://foo-bar.com",
-				"serverIp":        "127.0.0.1",
-				"hoursReserved":   "4",
-				"terminationDate": "20.01.2025",
-			}
-
-			_, _, err := br.TransactionalEmailsApi.SendTransacEmail(ctx, brevo.SendSmtpEmail{
-				To: []brevo.SendSmtpEmailTo{
-					{
-						Email: "anes.hasicic@gmail.com",
-						Name:  "Customer",
-					},
-					{
-						Email: "me@anes.io",
-						Name:  "Admin",
-					},
+	_, _, err = s.client.TransactionalEmailsApi.SendTransacEmail(
+		ctx,
+		brevo.SendSmtpEmail{
+			To: []brevo.SendSmtpEmailTo{
+				{
+					Email: serverDetails.UserEmail,
+					Name:  "Customer",
 				},
-				TemplateId: 1,
-				Params:     params,
-			})
-			if err != nil {
-				return err
-			}
+			},
+			TemplateId: 1,
+			Params:     params,
+		})
 
-			_, _ = checkout.ServerDetails(ctx, msg.ServerID)
-			// TODO - CC me - configurable
+	return err
+}
 
-			return nil
-		},
-		MaxConcurrency: 20,
-		RetryPolicy: &pubsub.RetryPolicy{
-			MaxRetries: 20,
-		},
-	},
-)
+// HandleServerTerminated sends an email after a server has been terminated
+//
+//encore:api private method=POST path=/emailer/handleServerTerminated
+func (s *Service) HandleServerTerminated(ctx context.Context, msg *messages.ServerTerminated) error {
+	serverDetails, err := checkout.ServerDetails(ctx, msg.ServerID)
+	if err != nil {
+		return err
+	}
 
-var _ = pubsub.NewSubscription(
-	infra.TerminatedServersTopic,
-	"provisioned-server-email-notifier",
-	pubsub.SubscriptionConfig[*messages.ServerTerminated]{
-		Handler: func(ctx context.Context, msg *messages.ServerTerminated) error {
-			rlog.Info("sending email")
+	_, _, err = s.client.TransactionalEmailsApi.SendTransacEmail(
+		ctx,
+		brevo.SendSmtpEmail{
+			To: []brevo.SendSmtpEmailTo{
+				{
+					Email: serverDetails.UserEmail,
+					Name:  "Customer",
+				},
+			},
+			TemplateId: 2,
+		})
 
-			_, _ = checkout.ServerDetails(ctx, msg.ServerID)
-
-			// TODO - CC me - configurable
-
-			return nil
-		},
-		MaxConcurrency: 20,
-		RetryPolicy: &pubsub.RetryPolicy{
-			MaxRetries: 20,
-		},
-	},
-)
+	return err
+}

@@ -22,7 +22,7 @@ type ProvisionedServerStore struct {
 }
 
 // Save saves a provisioned server
-func (s *ProvisionedServerStore) Save(ctx context.Context, server provisionedserver.ProvisionedServer) error {
+func (s *ProvisionedServerStore) Save(ctx context.Context, server provisionedserver.ProvisionedServer) (uint64, error) {
 	conn := stdpg.Conn(ctx, s.db)
 
 	entry := boiler.ProvisionedServer{
@@ -33,10 +33,10 @@ func (s *ProvisionedServerStore) Save(ctx context.Context, server provisionedser
 
 	err := entry.Insert(ctx, conn, boil.Infer())
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return uint64(entry.ID), nil
 }
 
 // Update updates a provisioned server
@@ -57,6 +57,20 @@ func (s *ProvisionedServerStore) Update(ctx context.Context, server provisioneds
 	_, err := entry.Update(ctx, conn, boil.Infer())
 
 	return err
+}
+
+// FindByID finds server by id
+func (s *ProvisionedServerStore) FindByID(ctx context.Context, id uint64) (*provisionedserver.ProvisionedServer, error) {
+	conn := stdpg.Conn(ctx, s.db)
+
+	result, err := boiler.FindProvisionedServer(ctx, conn, int64(id))
+	if err != nil {
+		return nil, err
+	}
+
+	svr := fromBoilServer(result)
+
+	return &svr, nil
 }
 
 // select
@@ -90,17 +104,21 @@ func (s *ProvisionedServerStore) FindExpired(ctx context.Context, limit int) ([]
 	var servers []provisionedserver.ProvisionedServer
 
 	for _, bs := range result {
-		servers = append(servers, provisionedserver.ProvisionedServer{
-			ID:                     uint64(bs.ID),
-			ServerID:               uint64(bs.ServerID),
-			InstanceID:             bs.InstanceID,
-			ExpiresAt:              bs.ExpiresAt,
-			TerminationScheduledAt: nil,
-			TerminatedAt:           nil,
-			CreatedAt:              bs.CreatedAt,
-			UpdatedAt:              bs.UpdatedAt,
-		})
+		servers = append(servers, fromBoilServer(bs))
 	}
 
 	return servers, nil
+}
+
+func fromBoilServer(s *boiler.ProvisionedServer) provisionedserver.ProvisionedServer {
+	return provisionedserver.ProvisionedServer{
+		ID:                     uint64(s.ID),
+		ServerID:               uint64(s.ServerID),
+		InstanceID:             s.InstanceID,
+		ExpiresAt:              s.ExpiresAt,
+		TerminationScheduledAt: s.TerminationScheduledAt.Ptr(),
+		TerminatedAt:           s.TerminatedAt.Ptr(),
+		CreatedAt:              s.CreatedAt,
+		UpdatedAt:              s.UpdatedAt,
+	}
 }

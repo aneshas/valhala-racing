@@ -5,6 +5,7 @@ import (
 	"encore.app/pkg/infra"
 	"encore.app/pkg/messages"
 	stdpg "encore.app/pkg/pg"
+	"encore.app/provisioner/awsprovisioner"
 	"encore.app/provisioner/pg"
 	"encore.dev/cron"
 	"encore.dev/pubsub"
@@ -13,6 +14,12 @@ import (
 	"github.com/aneshas/tx/v2/sqltx"
 	"x.encore.dev/infra/pubsub/outbox"
 )
+
+var secrets struct {
+	AWSKeyID     string
+	AWSKeySecret string
+	AWSRoleARN   string
+}
 
 var db = sqldb.NewDatabase(
 	"provisioner",
@@ -49,9 +56,10 @@ func initService() (*Service, error) {
 	go relay.PollForMessages(context.Background(), -1)
 
 	return &Service{
-		Transactor: tx.New(sqltx.NewDB(stdDB)),
-		store:      pg.NewProvisionedServerStore(stdDB),
-		pub:        stdpg.NewOutboxStore(stdDB, refs),
+		Transactor:  tx.New(sqltx.NewDB(stdDB)),
+		provisioner: awsprovisioner.NewAWSProvisioner(secrets.AWSKeyID, secrets.AWSKeySecret, secrets.AWSRoleARN),
+		store:       pg.NewProvisionedServerStore(stdDB),
+		pub:         stdpg.NewOutboxStore(stdDB, refs),
 	}, nil
 }
 

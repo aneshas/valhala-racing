@@ -58,6 +58,20 @@ func (s *ServerStore) Update(ctx context.Context, server server.Server) error {
 	return err
 }
 
+// FindByID finds server by id
+func (s *ServerStore) FindByID(ctx context.Context, id uint64) (*server.Server, error) {
+	conn := stdpg.Conn(ctx, s.db)
+
+	result, err := boiler.FindServer(ctx, conn, int64(id))
+	if err != nil {
+		return nil, err
+	}
+
+	svr := fromBoilServer(result)
+
+	return &svr, nil
+}
+
 // FindByPaymentRef finds a server by payment reference
 func (s *ServerStore) FindByPaymentRef(ctx context.Context, paymentRef string) (*server.Server, error) {
 	conn := stdpg.Conn(ctx, s.db)

@@ -21,10 +21,11 @@ type PaymentProvider interface {
 type Store interface {
 	Save(ctx context.Context, server server.Server) (uint64, error)
 	Update(ctx context.Context, server server.Server) error
+	FindByID(ctx context.Context, id uint64) (*server.Server, error)
 	FindByPaymentRef(ctx context.Context, paymentRef string) (*server.Server, error)
 }
 
-// Service represents RaceRoom api service
+// Service represents checkout api service
 //
 // encore:service
 type Service struct {
@@ -131,7 +132,5 @@ func (s *Service) RegisterServerPayment(ctx context.Context, req *RegisterServer
 
 //encore:api private method=GET path=/checkout/server/details/:id
 func (s *Service) ServerDetails(ctx context.Context, id uint64) (*server.Server, error) {
-	return &server.Server{
-		UserEmail: "mail@mail.com",
-	}, nil
+	return s.store.FindByID(ctx, id)
 }

@@ -2,11 +2,31 @@
 
 package provisioner
 
-import "context"
+import (
+	"context"
+	messages "encore.app/pkg/messages"
+)
 
 // These functions are automatically generated and maintained by Encore
 // to simplify calling them from other services, as they were implemented as methods.
 // They are automatically updated by Encore whenever your API endpoints change.
+
+func InstanceDetails(ctx context.Context, id string) (*InstanceDetailsResp, error) {
+	// The implementation is elided here, and generated at compile-time by Encore.
+	return (*InstanceDetailsResp)(nil), nil
+}
+
+// HandlePaymentReceived provisions a server after a successful payment
+func HandlePaymentReceived(ctx context.Context, p *messages.ServerPaymentReceived) error {
+	// The implementation is elided here, and generated at compile-time by Encore.
+	return nil
+}
+
+// HandleScheduledTermination terminates server
+func HandleScheduledTermination(ctx context.Context, p *messages.ServerTerminationScheduled) error {
+	// The implementation is elided here, and generated at compile-time by Encore.
+	return nil
+}
 
 // ScheduleTermination schedules a batch of expired servers for termination
 func ScheduleTermination(ctx context.Context) error {
@@ -20,6 +40,14 @@ func ScheduleTermination(ctx context.Context) error {
 // support service-to-service API calls to raw endpoints.
 type Interface interface {
 	scheduleServerTermination(ctx context.Context) error
+
+	InstanceDetails(ctx context.Context, id string) (*InstanceDetailsResp, error)
+
+	// HandlePaymentReceived provisions a server after a successful payment
+	HandlePaymentReceived(ctx context.Context, p *messages.ServerPaymentReceived) error
+
+	// HandleScheduledTermination terminates server
+	HandleScheduledTermination(ctx context.Context, p *messages.ServerTerminationScheduled) error
 
 	// ScheduleTermination schedules a batch of expired servers for termination
 	ScheduleTermination(ctx context.Context) error
