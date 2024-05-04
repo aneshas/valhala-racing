@@ -60,7 +60,7 @@ func (s *Service) HandlePaymentReceived(ctx context.Context, msg *messages.Serve
 			rlog.Error("provisioner error", "err", err.Error())
 			instanceID = "xxx"
 
-			return nil
+			// return nil
 		}
 
 		provisionedServerID, err := s.store.Save(
