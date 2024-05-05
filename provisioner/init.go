@@ -10,9 +10,12 @@ import (
 	"encore.dev/config"
 	"encore.dev/cron"
 	"encore.dev/pubsub"
+	"encore.dev/storage/cache"
 	"encore.dev/storage/sqldb"
 	"github.com/aneshas/tx/v2"
 	"github.com/aneshas/tx/v2/sqltx"
+	"github.com/friendsofgo/errors"
+	"time"
 	"x.encore.dev/infra/pubsub/outbox"
 )
 
@@ -69,10 +72,11 @@ func initService() (*Service, error) {
 	}
 
 	return &Service{
-		Transactor:  tx.New(sqltx.NewDB(stdDB)),
-		provisioner: provisioner,
-		store:       pg.NewProvisionedServerStore(stdDB),
-		pub:         stdpg.NewOutboxStore(stdDB, refs),
+		Transactor:       tx.New(sqltx.NewDB(stdDB)),
+		provisioner:      provisioner,
+		isMessageSeenFor: cacheKeyExists,
+		store:            pg.NewProvisionedServerStore(stdDB),
+		pub:              stdpg.NewOutboxStore(stdDB, refs),
 	}, nil
 }
 
@@ -109,4 +113,26 @@ var _ = cron.NewJob("provisioner-termination-scheduler", cron.JobConfig{
 //encore:api private
 func scheduleServerTermination(ctx context.Context) error {
 	return ScheduleTermination(ctx)
+}
+
+var cacheCluster = cache.NewCluster("provisioner-cache-cluster", cache.ClusterConfig{
+	EvictionPolicy: cache.AllKeysLRU,
+})
+
+var processedMessagesCache = cache.NewIntKeyspace[string](cacheCluster, cache.KeyspaceConfig{
+	KeyPattern:    "provisioner-messages/:key",
+	DefaultExpiry: cache.ExpireIn(10 * time.Minute),
+})
+
+func cacheKeyExists(ctx context.Context, key string) (bool, error) {
+	val, err := processedMessagesCache.GetAndSet(ctx, key, 1)
+	if err != nil {
+		if errors.Is(err, cache.Miss) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return val != 0, nil
 }

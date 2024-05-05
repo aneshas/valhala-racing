@@ -15,6 +15,7 @@ The whole solution is built using [Encore](https://encore.dev/) and showcases th
 - Usage of Encore Transactional Outbox for reliable message publishing 
 - How [sqlboiler](https://github.com/volatiletech/sqlboiler) can be used with Encore. 
 - How one can combine Encore, sqlboiler and outbox pattern in atomic vay using [tx](https://github.com/aneshas/tx) go package
+- Time windowed message deduplication using Encore cache (without using at least once delivery guarantee)
 - Using Encore Cron Jobs in combination with pubsub for async job scheduling 
 - Using external services with Encore (eg. smtp, cloud providers, payment providers)
 

@@ -24,15 +24,19 @@ type ServerProvisioner interface {
 	InstanceDetails(instanceID string) (*provisionedserver.InstanceDetails, error)
 }
 
+// DeDupFunc represents message deduplication func
+type DeDupFunc func(ctx context.Context, key string) (bool, error)
+
 // Service represents provisioner api service
 //
 // encore:service
 type Service struct {
 	tx.Transactor
 
-	provisioner ServerProvisioner
-	store       Store
-	pub         messages.Publisher
+	provisioner      ServerProvisioner
+	store            Store
+	isMessageSeenFor DeDupFunc
+	pub              messages.Publisher
 }
 
 // InstanceDetailsResp represents server instance information
@@ -65,6 +69,17 @@ func (s *Service) InstanceDetails(ctx context.Context, provisionedServerId uint6
 //
 //encore:api private method=POST path=/provisioner/handlePaymentReceived
 func (s *Service) HandlePaymentReceived(ctx context.Context, msg *messages.ServerPaymentReceived) error {
+	// Tried implementing this as a middleware but middleware would not register
+	// to a pubsub service handler method such as this one for some reason...
+	ok, err := s.isMessageSeenFor(ctx, msg.CacheKey())
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return nil
+	}
+
 	return s.WithTransaction(ctx, func(ctx context.Context) error {
 		instanceID, err := s.provisioner.ProvisionServer(msg.ServerID)
 		if err != nil {
